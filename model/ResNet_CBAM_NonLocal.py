@@ -101,3 +101,14 @@ def resnet18_nonlocal(pretrained=False, **kwargs):
         model.load_state_dict(now_state_dict)
     return model
 
+def resnet34_CBAM_NonLocal(pretrained=False, **kwargs):
+    """Constructs a ResNet-34 model.
+    """
+    model = ResNet_CBAM_NonLocal(BasicBlock, [3, 4, 6, 3], **kwargs)
+    if pretrained:
+        pretrained_state_dict = model_zoo.load_url(model_urls['resnet34'])
+        now_state_dict = model.state_dict()
+        now_state_dict.update(pretrained_state_dict)
+        model.load_state_dict(now_state_dict)
+    return model
+
