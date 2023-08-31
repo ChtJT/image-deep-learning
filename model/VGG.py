@@ -63,7 +63,7 @@ cfgs = {
 }
 
 
-def vgg(model_name="vgg16", **kwargs):
+def vgg16(model_name="vgg16", **kwargs):
     assert model_name in cfgs, "Warning: model number {} not in cfgs dict!".format(model_name)
     cfg = cfgs[model_name]
 
