@@ -126,20 +126,21 @@ def main():
             loss.backward()  # 损失函数对神经网络权重反向传播求梯度
             optimizer.step()  # 优化更新神经网络权重
         print('\n本轮训练的平均损失值为 {:.3f} %'.format(avg_loss/total_num))
+        model.eval()
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for images, labels in tqdm(test_loader):  # 获取测试集的一个 batch，包含数据和标注
+                images = images.to(device)
+                labels = labels.to(device)
+                classes = model.forward(images)  # 前向预测，获得当前 batch 的预测置信度
+                _, preds = torch.max(classes, 1)  # 获得最大置信度对应的类别，作为预测结果
+                total += labels.size(0)
+                correct += (preds == labels).sum()  # 预测正确样本个数
 
-    model.eval()
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for images, labels in tqdm(test_loader):  # 获取测试集的一个 batch，包含数据和标注
-            images = images.to(device)
-            labels = labels.to(device)
-            classes = model.forward(images)  # 前向预测，获得当前 batch 的预测置信度
-            _, preds = torch.max(classes, 1)  # 获得最大置信度对应的类别，作为预测结果
-            total += labels.size(0)
-            correct += (preds == labels).sum()  # 预测正确样本个数
+            print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
 
-        print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
+
 
 if __name__ == '__main__':
     main()

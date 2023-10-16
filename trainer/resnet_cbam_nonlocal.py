@@ -68,9 +68,12 @@ def main():
     class_names = train_dataset.classes
     n_class = len(class_names)
     idx_to_labels = {y:x for x,y in train_dataset.class_to_idx.items()}
-    #%%
 
-    BATCH_SIZE = 10
+    cam_save_dir = "CAM_Images"
+    os.makedirs(cam_save_dir, exist_ok=True)
+
+
+    BATCH_SIZE = 500
 
     # 训练集的数据加载器
     train_loader = DataLoader(train_dataset,
@@ -105,7 +108,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     # 训练轮次 Epoch
-    EPOCHS = 20
+    EPOCHS = 100
     if hasattr(torch.cuda, 'empty_cache'):
         torch.cuda.empty_cache()
     # 遍历每个 EPOCH
@@ -128,19 +131,21 @@ def main():
             optimizer.step()  # 优化更新神经网络权重
         print('\n本轮训练的平均损失值为 {:.3f} %'.format(avg_loss/total_num))
 
-    model.eval()
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for images, labels in tqdm(test_loader):  # 获取测试集的一个 batch，包含数据和标注
-            images = images.to(device)
-            labels = labels.to(device)
-            classes = model.forward(images)  # 前向预测，获得当前 batch 的预测置信度
-            _, preds = torch.max(classes, 1)  # 获得最大置信度对应的类别，作为预测结果
-            total += labels.size(0)
-            correct += (preds == labels).sum()  # 预测正确样本个数
+        model.eval()
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for images, labels in tqdm(test_loader):  # 获取测试集的一个 batch，包含数据和标注
+                images = images.to(device)
+                labels = labels.to(device)
+                classes = model.forward(images)  # 前向预测，获得当前 batch 的预测置信度
+                _, preds = torch.max(classes, 1)  # 获得最大置信度对应的类别，作为预测结果
+                total += labels.size(0)
+                correct += (preds == labels).sum()  # 预测正确样本个数
 
-        print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
+            print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
+
+
 
 if __name__ == '__main__':
     main()
