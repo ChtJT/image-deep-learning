@@ -55,6 +55,7 @@ class GradCAM:
 
 
 def overlay_heatmap(cam, image, alpha=0.5, colormap=cv2.COLORMAP_JET):
+    cam = 1 - cam  # Inverting the CAM values
     cam = cv2.applyColorMap(np.uint8(255 * cam), colormap)
     cam = np.float32(cam) + np.float32(image)
     cam = 255 * cam / np.max(cam)
