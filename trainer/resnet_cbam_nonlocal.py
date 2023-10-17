@@ -1,20 +1,15 @@
-import time
 import os
 
-import numpy as np
 from tqdm import tqdm
 
 import torch
-import torchvision
 import torch.nn as nn
-import torch.nn.functional as F
 
 # 忽略烦人的红色提示
 import warnings
 
 warnings.filterwarnings("ignore")
 
-from torchvision import models
 import torch.optim as optim
 
 from torchvision import transforms
@@ -23,9 +18,8 @@ from torchvision import datasets
 
 from torch.utils.data import DataLoader
 
-import sys
-sys.path.append("..")
 from model import ResNet_CBAM_NonLocal
+# from grad_cam import GradCam, show_cam_on_image
 
 def main():
 
@@ -52,7 +46,7 @@ def main():
                                     ])
 
     dataset_dir = 'data_split'
-    train_path = os.path.join(dataset_dir, 'train')
+    train_path = os.path.join(dataset_dir, 'pretrain')
     test_path = os.path.join(dataset_dir, 'val')
     print('训练集路径', train_path)
     print('测试集路径', test_path)
@@ -69,11 +63,7 @@ def main():
     n_class = len(class_names)
     idx_to_labels = {y:x for x,y in train_dataset.class_to_idx.items()}
 
-    cam_save_dir = "CAM_Images"
-    os.makedirs(cam_save_dir, exist_ok=True)
-
-
-    BATCH_SIZE = 500
+    BATCH_SIZE = 50
 
     # 训练集的数据加载器
     train_loader = DataLoader(train_dataset,
@@ -93,9 +83,22 @@ def main():
 
     # 自搭resnet34模型
     #载入预训练权重参数
-    model=ResNet_CBAM_NonLocal.resnet34_cbam_nonlocal()
+    model=ResNet_CBAM_NonLocal.resnet34_cbam_nonlocal(pretrained=True)
     inchannel = model.fc.in_features
     model.fc=nn.Linear(inchannel,n_class)
+
+    # # cam
+    # target_layer = model.nl4
+    # target_category = 2
+    # cam = GradCAM(model=model, target_layers=target_layer, use_cuda=True)
+    # grayscale_cam = cam(input_tensor=images, target_category=target_category)
+    # grayscale_cam = grayscale_cam[0, :]
+    # visualization = show_cam_on_image(img.astype(dtype=np.float32) / 255.,
+    #                                   grayscale_cam,
+    #                                   use_rgb=True)
+    #
+
+
 
     #训练用模型
     # model=models.resnet50(pretrained=True)
@@ -144,7 +147,8 @@ def main():
                 correct += (preds == labels).sum()  # 预测正确样本个数
 
             print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
-
+    # 保存模型参数
+    torch.save(model.state_dict(), 'model_weights.pth')
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 from CBAM import CBAM
-from NonLocal import _NonLocalBlockND
+from NonLocal import NonLocalBlockND
 from ResNet import BasicBlock, Bottleneck
 
 model_urls = {
@@ -28,13 +28,13 @@ class ResNet_CBAM_NonLocal(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
-        self.nl1 = _NonLocalBlockND(in_channels=64, dimension=2)  # 添加非局部模块
+        self.nl1 = NonLocalBlockND(in_channels=64, dimension=2)  # 添加非局部模块
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.nl2 = _NonLocalBlockND(in_channels=128, dimension=2)  # 添加非局部模块
+        self.nl2 = NonLocalBlockND(in_channels=128, dimension=2)  # 添加非局部模块
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.nl3 = _NonLocalBlockND(in_channels=256, dimension=2)  # 添加非局部模块
+        self.nl3 = NonLocalBlockND(in_channels=256, dimension=2)  # 添加非局部模块
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.nl4 = _NonLocalBlockND(in_channels=512, dimension=2)  # 添加非局部模块
+        self.nl4 = NonLocalBlockND(in_channels=512, dimension=2)  # 添加非局部模块
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)

@@ -1,20 +1,15 @@
-import time
 import os
 
-import numpy as np
 from tqdm import tqdm
 
 import torch
-import torchvision
 import torch.nn as nn
-import torch.nn.functional as F
 
 # 忽略烦人的红色提示
 import warnings
 
 warnings.filterwarnings("ignore")
 
-from torchvision import models
 import torch.optim as optim
 
 from torchvision import transforms
@@ -22,12 +17,11 @@ from torchvision import transforms
 from torchvision import datasets
 
 from torch.utils.data import DataLoader
+from sklearn.metrics import precision_score, accuracy_score, recall_score, f1_score
+from model import ResNet_CBAM_NonLocal
+# from grad_cam import GradCam, show_cam_on_image
 
-import multiprocessing
-
-from model.ResNet_CBAM_NonLocal import resnet34_CBAM_NonLocal
-
-def train():
+def main():
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print('device', device)
@@ -68,33 +62,43 @@ def train():
     class_names = train_dataset.classes
     n_class = len(class_names)
     idx_to_labels = {y:x for x,y in train_dataset.class_to_idx.items()}
-    #%%
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 100
 
     # 训练集的数据加载器
     train_loader = DataLoader(train_dataset,
                               batch_size=BATCH_SIZE,
                               shuffle=True,
-                              num_workers=0  #windows系统这里一定要设置成单线程！！！
+                              num_workers=5  #windows系统这里一定要设置成单线程！！！
                              )
 
     # 测试集的数据加载器
     test_loader = DataLoader(test_dataset,
                              batch_size=BATCH_SIZE,
                              shuffle=False,
-                             num_workers=0  #windows系统这里一定要设置成单线程！！！
+                             num_workers=5  #windows系统这里一定要设置成单线程！！！
                             )
 
     images, labels = next(iter(train_loader))
 
     # 自搭resnet34模型
     #载入预训练权重参数
-    model = resnet34_CBAM_NonLocal()
-    model_weight_path = "./resnet34-pretrain.pth"
-    misssing_keys,unexpected_keys=model.load_state_dict(torch.load(model_weight_path),strict=False)
+    model=ResNet_CBAM_NonLocal.resnet34_CBAM_NonLocal(pretrained=True)
     inchannel = model.fc.in_features
-    model.fc=nn.Linear(inchannel,n_class)
+    model.fc = nn.Linear(inchannel, n_class)
+
+    # # cam
+    # target_layer = model.nl4
+    # target_category = 2
+    # cam = GradCAM(model=model, target_layers=target_layer, use_cuda=True)
+    # grayscale_cam = cam(input_tensor=images, target_category=target_category)
+    # grayscale_cam = grayscale_cam[0, :]
+    # visualization = show_cam_on_image(img.astype(dtype=np.float32) / 255.,
+    #                                   grayscale_cam,
+    #                                   use_rgb=True)
+    #
+
+
 
     #训练用模型
     # model=models.resnet50(pretrained=True)
@@ -107,7 +111,7 @@ def train():
     criterion = nn.CrossEntropyLoss()
 
     # 训练轮次 Epoch
-    EPOCHS = 150
+    EPOCHS = 10
     if hasattr(torch.cuda, 'empty_cache'):
         torch.cuda.empty_cache()
     # 遍历每个 EPOCH
@@ -129,10 +133,13 @@ def train():
             loss.backward()  # 损失函数对神经网络权重反向传播求梯度
             optimizer.step()  # 优化更新神经网络权重
         print('\n本轮训练的平均损失值为 {:.3f} %'.format(avg_loss/total_num))
+
         model.eval()
         with torch.no_grad():
             correct = 0
             total = 0
+            all_true_labels = []
+            all_pred_labels = []
             for images, labels in tqdm(test_loader):  # 获取测试集的一个 batch，包含数据和标注
                 images = images.to(device)
                 labels = labels.to(device)
@@ -140,11 +147,20 @@ def train():
                 _, preds = torch.max(classes, 1)  # 获得最大置信度对应的类别，作为预测结果
                 total += labels.size(0)
                 correct += (preds == labels).sum()  # 预测正确样本个数
-
-            print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
-
-
+                all_true_labels.extend(labels.cpu().numpy())
+                all_pred_labels.extend(preds.cpu().numpy())
+            Precision = precision_score(all_true_labels, all_pred_labels, average='macro')
+            Accuracy = accuracy_score(all_true_labels, all_pred_labels)
+            Recall = recall_score(all_true_labels, all_pred_labels, average='macro')
+            F1 = f1_score(all_true_labels, all_pred_labels, average='macro')
+            print('Precision:', Precision)
+            print('Accuracy:', Accuracy)
+            print('Recall:', Recall)
+            print('F1 Score:', F1)
+            # print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
+    # 保存模型参数
+    torch.save(model.state_dict(), 'model_weights.pth')
 
 
 if __name__ == '__main__':
-    train()
+    main()

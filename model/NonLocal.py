@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class _NonLocalBlockND(nn.Module):
+class NonLocalBlockND(nn.Module):
     def __init__(self, in_channels, inter_channels=None, dimension=2, sub_sample=True, bn_layer=True):
-        super(_NonLocalBlockND, self).__init__()
+        super(NonLocalBlockND, self).__init__()
 
         assert dimension in [1, 2, 3]
 
