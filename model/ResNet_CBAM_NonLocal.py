@@ -1,13 +1,8 @@
 import torch.nn as nn
-import torch.nn.functional as F
-import torch
-import torch
-import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
-from CBAM import CBAM
 from NonLocal import NonLocalBlockND
-from ResNet import BasicBlock, Bottleneck
+from ResNet.ResNet import BasicBlock
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -111,4 +106,3 @@ def resnet34_CBAM_NonLocal(pretrained=False, **kwargs):
         now_state_dict.update(pretrained_state_dict)
         model.load_state_dict(now_state_dict)
     return model
-

@@ -7,7 +7,7 @@ import os
 import glob
 from torchvision import transforms
 from PIL import Image
-from ResNet_CBAM_NonLocal import resnet34_CBAM_NonLocal
+from ResNet.ResNet import resnet34
 
 class GradCAM:
     def __init__(self, model, feature_layer):
@@ -105,7 +105,7 @@ def generate_heatmaps_for_model(model, model_weights_path, feature_layer, source
             os.makedirs(save_dir)
         Image.fromarray(result).save(save_path)
 
-model = resnet34_CBAM_NonLocal()
+model = resnet34()
 model.fc = torch.nn.Linear(model.fc.in_features, 3)
-feature_layer = model.nl4
-generate_heatmaps_for_model(model, "model_weights.pth", feature_layer, "data_split/train", "data_split/train_heatmaps")
+feature_layer = model.fc
+generate_heatmaps_for_model(model, "pth/resnet_model_weights.pth", feature_layer, "data_split/train", "data_split/train_heatmaps")

@@ -19,8 +19,6 @@ from torchvision import datasets
 from torch.utils.data import DataLoader
 from sklearn.metrics import precision_score, accuracy_score, recall_score, f1_score
 from ResNet.ResNet import resnet34
-# from grad_cam import GradCam, show_cam_on_image
-
 def main():
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -111,7 +109,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
 
     # 训练轮次 Epoch
-    EPOCHS = 10
+    EPOCHS = 100
     if hasattr(torch.cuda, 'empty_cache'):
         torch.cuda.empty_cache()
     # 遍历每个 EPOCH

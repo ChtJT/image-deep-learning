@@ -148,7 +148,7 @@ def main():
 
             print('测试集上的准确率为 {:.3f} %'.format(100 * correct / total))
     # 保存模型参数
-    torch.save(model.state_dict(), 'model_weights.pth')
+    torch.save(model.state_dict(), 'resnet_cbam_nonlocal_model_weights.pth')
 
 
 if __name__ == '__main__':
